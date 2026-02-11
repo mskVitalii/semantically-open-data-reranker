@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual env
+.venv/
+env/
+venv/
+
+# Caches
+*.log
+*.sqlite3
+*.db
+.cache/
+.huggingface/
+transformers_cache/
+datasets_cache/
+sentence_transformers/
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Docker
+*.tar
