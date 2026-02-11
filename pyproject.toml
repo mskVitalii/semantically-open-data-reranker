@@ -8,6 +8,4 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     "transformers>=4.47.1,<5.0.0",
     "torch>=2.5.0",
-    "torchvision>=0.20.0",
-    "pillow>=10.0.0",
 ]

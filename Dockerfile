@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 # Build argument for model name
-ARG MODEL_NAME=nvidia/llama-nemotron-rerank-vl-1b-v2
+ARG MODEL_NAME=jinaai/jina-reranker-v3
 
 # Environment variables
 ENV MODEL_NAME=${MODEL_NAME}
@@ -18,7 +18,7 @@ RUN uv sync --no-dev --no-install-project
 
 COPY app/ app/
 
-# Pre-download the model during build (imports app.reranker to apply the flash_attn patch)
+# Pre-download the model during build
 RUN uv run python -c "from app.reranker import load_model; load_model()"
 
 EXPOSE 8000

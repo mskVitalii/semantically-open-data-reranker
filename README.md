@@ -1,6 +1,6 @@
 # open-data-reranker
 
-A lightweight reranking microservice built with FastAPI, powered by [nvidia/llama-nemotron-rerank-vl-1b-v2](https://huggingface.co/nvidia/llama-nemotron-rerank-vl-1b-v2) (1.7B params).
+A lightweight reranking microservice built with FastAPI, powered by [jinaai/jina-reranker-v3](https://huggingface.co/jinaai/jina-reranker-v3) (0.6B params).
 
 Takes a query and a list of documents, returns them ranked by relevance.
 
@@ -66,7 +66,7 @@ Rerank documents by relevance to a query.
 }
 ```
 
-Scores are sigmoid-normalized logits in the `[0, 1]` range.
+Higher scores indicate greater relevance.
 
 ### `GET /health`
 
@@ -81,18 +81,6 @@ make run       # run container on :8000
 
 The Docker build pre-downloads model weights so the container starts instantly.
 
-## GPU support
-
-On CUDA systems the service automatically uses `bfloat16` precision and `flash_attention_2`. On CPU it falls back to `float32` with eager attention.
-
-For GPU Docker builds, swap the base image to a CUDA-enabled one and add `flash-attn`:
-
-```dockerfile
-FROM nvidia/cuda:12.4.0-runtime-ubuntu22.04
-# ...
-RUN pip install "flash-attn>=2.6.3,<2.8" --no-build-isolation
-```
-
 ## Project structure
 
 ```
@@ -106,4 +94,4 @@ Makefile        # Dev/build/deploy commands
 
 ## License
 
-The model weights are governed by the [NVIDIA Open Model License](https://developer.nvidia.com/open-model-license). Built with Llama.
+The model weights are governed by the [Jina AI License](https://huggingface.co/jinaai/jina-reranker-v3).

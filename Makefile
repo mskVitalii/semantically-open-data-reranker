@@ -3,10 +3,10 @@ VERSION ?= $(DATE_TAG)
 
 # Supported models
 MODELS := \
-    nvidia/llama-nemotron-rerank-vl-1b-v2
+    jinaai/jina-reranker-v3
 
 # Default model
-MODEL ?= nvidia/llama-nemotron-rerank-vl-1b-v2
+MODEL ?= jinaai/jina-reranker-v3
 
 # Convert model name to tag-friendly format (lowercase, replace / and special chars with -)
 MODEL_TAG := $(shell echo "$(MODEL)" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
