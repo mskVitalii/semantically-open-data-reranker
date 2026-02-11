@@ -18,10 +18,8 @@ RUN uv sync --no-dev --no-install-project
 
 COPY app/ app/
 
-# Pre-download the model during build
-RUN uv run python -c "from transformers import AutoModelForSequenceClassification, AutoProcessor; \
-    AutoModelForSequenceClassification.from_pretrained('${MODEL_NAME}', trust_remote_code=True); \
-    AutoProcessor.from_pretrained('${MODEL_NAME}', trust_remote_code=True)"
+# Pre-download the model during build (imports app.reranker to apply the flash_attn patch)
+RUN uv run python -c "from app.reranker import load_model; load_model()"
 
 EXPOSE 8000
 
