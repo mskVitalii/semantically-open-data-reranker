@@ -1,10 +1,12 @@
 import os
+import threading
 
 from transformers import AutoModel
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "jinaai/jina-reranker-v3")
 
 _model = None
+_model_lock = threading.Lock()
 
 
 def load_model() -> None:
@@ -25,7 +27,8 @@ def rerank(
     if _model is None:
         raise RuntimeError("Model not loaded. Call load_model() first.")
 
-    results = _model.rerank(query, documents, top_n=top_n)
+    with _model_lock:
+        results = _model.rerank(query, documents, top_n=top_n)
     return [
         {
             "index": r["index"],
