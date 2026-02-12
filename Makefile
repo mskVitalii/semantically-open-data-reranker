@@ -24,6 +24,9 @@ install:
 dev:
 	MODEL_NAME="$(MODEL)" uv run uvicorn app.main:app --reload --host 0.0.0.0 --port $(PORT)
 
+run-local:
+	MODEL_NAME="$(MODEL)" uv run uvicorn app.main:app --host 0.0.0.0 --port 8084
+
 build:
 	@echo "Building $(IMAGE_NAME):$(VERSION) with model $(MODEL)"
 	docker build \
