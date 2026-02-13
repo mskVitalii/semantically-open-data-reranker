@@ -16,7 +16,8 @@ IMAGE_BASE = mskkote/reranker
 IMAGE_NAME = $(IMAGE_BASE)-$(MODEL_TAG)
 PORT = 8000
 
-.PHONY: install dev build run push test health build-all push-all list-models info
+.PHONY: install dev build run push test health build-all push-all list-models info \
+       build-gpu run-gpu push-gpu build-all-gpu push-all-gpu
 
 install:
 	uv sync
@@ -44,6 +45,45 @@ push:
 		echo "Pushing $$image"; \
 		docker push $$image || true; \
 	done
+
+# === GPU targets ===
+
+GPU_IMAGE_NAME = $(IMAGE_BASE)-$(MODEL_TAG)-gpu
+
+build-gpu:
+	@echo "Building GPU $(GPU_IMAGE_NAME):$(VERSION) with model $(MODEL)"
+	docker build --platform linux/amd64 \
+		--build-arg MODEL_NAME="$(MODEL)" \
+		-f Dockerfile.gpu \
+		-t $(GPU_IMAGE_NAME):$(VERSION) \
+		-t $(GPU_IMAGE_NAME):latest \
+		.
+
+run-gpu:
+	docker run --rm --gpus all -p $(PORT):8000 $(GPU_IMAGE_NAME):latest
+
+push-gpu:
+	@echo "Pushing all tags for $(GPU_IMAGE_NAME)"
+	@docker images --format "{{.Repository}}:{{.Tag}}" | grep "^$(GPU_IMAGE_NAME):" | while read image; do \
+		echo "Pushing $$image"; \
+		docker push $$image || true; \
+	done
+
+build-all-gpu:
+	@for model in $(MODELS); do \
+		echo "Building GPU $$model..."; \
+		$(MAKE) build-gpu MODEL=$$model || exit 1; \
+	done
+	@echo "All GPU models built successfully!"
+
+push-all-gpu:
+	@for model in $(MODELS); do \
+		echo "Pushing GPU $$model..."; \
+		$(MAKE) push-gpu MODEL=$$model || exit 1; \
+	done
+	@echo "All GPU models pushed successfully!"
+
+# === Build/push all (CPU) ===
 
 # Build all models
 build-all:
