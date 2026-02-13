@@ -1,3 +1,4 @@
+import gc
 import logging
 import math
 import os
@@ -12,6 +13,7 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "jinaai/jina-reranker-v3")
 
 _model = None
 _model_lock = threading.Lock()
+_device = "cpu"
 
 
 def _get_device() -> str:
@@ -22,16 +24,26 @@ def _get_device() -> str:
     return "cpu"
 
 
+def _sync_and_empty_cache() -> None:
+    """Synchronize device and release cached memory."""
+    if _device == "mps":
+        torch.mps.synchronize()
+        torch.mps.empty_cache()
+    elif _device == "cuda":
+        torch.cuda.empty_cache()
+    gc.collect()
+
+
 def load_model() -> None:
-    global _model
-    device = _get_device()
-    logger.info("Using device: %s", device)
+    global _model, _device
+    _device = _get_device()
+    logger.info("Using device: %s", _device)
     _model = AutoModel.from_pretrained(
         MODEL_NAME,
         dtype="auto",
         trust_remote_code=True,
-    ).to(device)
-    _model.eval()
+    ).to(_device)
+    _model.requires_grad_(False)
 
 
 MAX_BATCH_SIZE = int(os.environ.get("RERANK_BATCH_SIZE", "10"))
@@ -43,15 +55,15 @@ def _rerank_batch(query: str, documents: list[str], top_n: int | None, batch_siz
 
     for start in range(0, len(documents), batch_size):
         batch_docs = documents[start : start + batch_size]
-        batch_results = _model.rerank(query, batch_docs, top_n=len(batch_docs))
+        with torch.no_grad():
+            batch_results = _model.rerank(query, batch_docs, top_n=len(batch_docs))
         for r in batch_results:
             all_results.append({
                 "index": r["index"] + start,
                 "document": r["document"],
                 "relevance_score": r["relevance_score"],
             })
-        if torch.backends.mps.is_available():
-            torch.mps.empty_cache()
+        _sync_and_empty_cache()
 
     all_results.sort(key=lambda r: r["relevance_score"], reverse=True)
     if top_n is not None:
@@ -75,10 +87,7 @@ def rerank(
                 break
             except RuntimeError as e:
                 if "out of memory" in str(e).lower() and batch_size > 1:
-                    if torch.backends.mps.is_available():
-                        torch.mps.empty_cache()
-                    elif torch.cuda.is_available():
-                        torch.cuda.empty_cache()
+                    _sync_and_empty_cache()
                     batch_size = max(1, batch_size // 2)
                     logger.warning("OOM with batch_size=%d, retrying with %d", batch_size * 2, batch_size)
                 else:
